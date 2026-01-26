@@ -1,0 +1,235 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyOr+5V2XpHaU/OPUdMwHpQo",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/Rachelllle/Spark-Core/blob/main/Session02ipynb\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "id": "X9v5a7ILpU5y"
+      },
+      "outputs": [],
+      "source": [
+        "!pip install -q pyspark"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from pyspark.sql import SparkSession\n",
+        "\n",
+        "# Créer une session Spark\n",
+        "spark = SparkSession.builder \\\n",
+        "    .appName(\"Lazy-Example\") \\\n",
+        "    .master(\"local[*]\") \\\n",
+        "    .getOrCreate()\n",
+        "\n",
+        "sc = spark.sparkContext\n",
+        "\n",
+        "# Créer un RDD avec les nombres de 1 à 20\n",
+        "rdd = sc.parallelize(range(1, 21))\n",
+        "\n",
+        "# Transformation map : multiplier par 2\n",
+        "rdd_doubled = rdd.map(lambda x: x*2)\n",
+        "\n",
+        "# Transformation filter : garder les nombres > 10\n",
+        "rdd_filtered = rdd_doubled.filter(lambda x: x > 10)\n",
+        "\n",
+        "# ⚠️ Observer le DAG avant action\n",
+        "print(\"=== DAG avant action ===\")\n",
+        "print(rdd_filtered.toDebugString())\n",
+        "\n",
+        "# 1️⃣ Action count() -> juste le nombre d'éléments\n",
+        "print(\"\\n=== Action count() ===\")\n",
+        "count_result = rdd_filtered.count()\n",
+        "print(\"Count:\", count_result)\n",
+        "\n",
+        "# Observer le DAG après count\n",
+        "print(\"=== DAG après count ===\")\n",
+        "print(rdd_filtered.toDebugString())\n",
+        "\n",
+        "# 2️⃣ Action collect() -> récupérer tous les éléments\n",
+        "print(\"\\n=== Action collect() ===\")\n",
+        "collect_result = rdd_filtered.collect()\n",
+        "print(\"Collect:\", collect_result)\n",
+        "\n",
+        "# Observer le DAG après collect\n",
+        "print(\"=== DAG après collect ===\")\n",
+        "print(rdd_filtered.toDebugString())\n",
+        "\n",
+        "# Arrêter Spark\n",
+        "spark.stop()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "4AD_lrCnpX41",
+        "outputId": "5a3c6f06-74b0-4a9e-eac3-54ea0e71fa28"
+      },
+      "execution_count": 3,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "=== DAG avant action ===\n",
+            "b'(2) PythonRDD[3] at RDD at PythonRDD.scala:56 []\\n |  ParallelCollectionRDD[2] at readRDDFromFile at PythonRDD.scala:297 []'\n",
+            "\n",
+            "=== Action count() ===\n",
+            "Count: 15\n",
+            "=== DAG après count ===\n",
+            "b'(2) PythonRDD[3] at RDD at PythonRDD.scala:56 []\\n |  ParallelCollectionRDD[2] at readRDDFromFile at PythonRDD.scala:297 []'\n",
+            "\n",
+            "=== Action collect() ===\n",
+            "Collect: [12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40]\n",
+            "=== DAG après collect ===\n",
+            "b'(2) PythonRDD[3] at RDD at PythonRDD.scala:56 []\\n |  ParallelCollectionRDD[2] at readRDDFromFile at PythonRDD.scala:297 []'\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from pyspark.sql import SparkSession\n",
+        "\n",
+        "# Créer une session Spark\n",
+        "spark = SparkSession.builder \\\n",
+        "    .appName(\"Map vs FlatMap\") \\\n",
+        "    .master(\"local[*]\") \\\n",
+        "    .getOrCreate()\n",
+        "\n",
+        "sc = spark.sparkContext\n",
+        "\n",
+        "# Texte\n",
+        "text = [\"Spark makes big data processing fast\"]\n",
+        "\n",
+        "# 1️⃣ Créer un RDD à partir du texte\n",
+        "rdd_text = sc.parallelize(text)\n",
+        "p(lambda line: line.split())\n",
+        "print(\"Résultat avec map :\", rdd_map.collect())\n",
+        "\n",
+        "# 3️⃣ Utiliser flatMap pour séparer les mots\n",
+        "rdd_flatmap = rdd_text.flatMap(lambda line: line.split())\n",
+        "print(\"Résultat avec flatMap :\", rdd_flatmap.collect())\n",
+        "\n",
+        "# Arrêter Spark\n",
+        "spark.stop()\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "jPNuPZh5seDw",
+        "outputId": "ce18f52d-bc3e-4df9-a0d9-cc98a96b0aa7"
+      },
+      "execution_count": 4,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Résultat avec map : [['Spark', 'makes', 'big', 'data', 'processing', 'fast']]\n",
+            "Résultat avec flatMap : ['Spark', 'makes', 'big', 'data', 'processing', 'fast']\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from pyspark.sql import SparkSession\n",
+        "\n",
+        "# 1️⃣ Créer une session Spark\n",
+        "spark = SparkSession.builder \\\n",
+        "    .appName(\"WordCount-Enhanced\") \\\n",
+        "    .master(\"local[*]\") \\\n",
+        "    .getOrCreate()\n",
+        "\n",
+        "sc = spark.sparkContext\n",
+        "\n",
+        "# 2️⃣ Exemple de texte\n",
+        "text = [\n",
+        "    \"Spark est super\",\n",
+        "    \"PySpark est puissant\",\n",
+        "    \"Spark et PySpark sont utilisés pour le Big Data\",\n",
+        "    \"Spark Spark PySpark\"\n",
+        "]\n",
+        "\n",
+        "# 3️⃣ Créer un RDD à partir de la liste de phrases\n",
+        "rdd_text = sc.parallelize(text)\n",
+        "\n",
+        "# 4️⃣ Split chaque phrase en mots, aplatir la liste et convertir en minuscules\n",
+        "words = rdd_text.flatMap(lambda line: line.split()) \\\n",
+        "                .map(lambda word: word.lower())\n",
+        "\n",
+        "# 5️⃣ Supprimer les doublons\n",
+        "unique_words = words.distinct()\n",
+        "\n",
+        "# 6️⃣ Mapper chaque mot en (mot, 1) pour WordCount\n",
+        "word_pairs = words.map(lambda word: (word, 1))\n",
+        "\n",
+        "# 7️⃣ Compter le nombre d'occurrences de chaque mot\n",
+        "word_count = word_pairs.reduceByKey(lambda a, b: a + b)\n",
+        "\n",
+        "# 8️⃣ Afficher le résultat\n",
+        "print(\"WordCount (ignore case) :\", word_count.collect())\n",
+        "\n",
+        "# 9️⃣ Afficher le nombre total de mots\n",
+        "total_words = words.count()\n",
+        "print(\"Nombre total de mots :\", total_words)\n",
+        "\n",
+        "# 🔟 Afficher le nombre de mots distincts\n",
+        "distinct_words_count = unique_words.count()\n",
+        "print(\"Nombre de mots distincts :\", distinct_words_count)\n",
+        "\n",
+        "# 1️⃣1️⃣ Arrêter Spark\n",
+        "spark.stop()\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "shbF8bXexEOU",
+        "outputId": "e1b86b02-c539-4116-c542-47327250cda3"
+      },
+      "execution_count": 5,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "WordCount (ignore case) : [('est', 2), ('puissant', 1), ('et', 1), ('sont', 1), ('big', 1), ('spark', 4), ('super', 1), ('pyspark', 3), ('utilisés', 1), ('pour', 1), ('le', 1), ('data', 1)]\n",
+            "Nombre total de mots : 18\n",
+            "Nombre de mots distincts : 12\n"
+          ]
+        }
+      ]
+    }
+  ]
+}
